@@ -1,0 +1,16 @@
+# Garage v2.4.1 for the PoC (Phase 1 step 1.8). Secrets are not here: GARAGE_RPC_SECRET and GARAGE_ADMIN_TOKEN come
+# from the Secret garage-secrets (created by the secrets script, never in Git).
+metadata_dir = "/var/lib/garage/meta"
+data_dir = "/var/lib/garage/data"
+# SQLite, not LMDB: Garage's docs say LMDB is "prone to database corruption after an unclean shutdown" (plan 1.8)
+db_engine = "sqlite"
+# Single node, no replication (no durability; PoC)
+replication_factor = 1
+rpc_bind_addr = "[::]:3901"
+
+[s3_api]
+s3_region = "garage"
+api_bind_addr = "[::]:3900"
+
+[admin]
+api_bind_addr = "[::]:3903"

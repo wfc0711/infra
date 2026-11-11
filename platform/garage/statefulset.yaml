@@ -1,0 +1,49 @@
+# Garage S3 store (plan P15, step 1.8). One node, one 2 GiB local-path volume (metadata and data in sub-folders).
+# Readiness is a TCP check on the admin port: Garage's /health stays 503 until a layout exists, and the layout is set
+# by the PostSync setup Job, which ArgoCD runs only after this StatefulSet is Ready.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: garage}
+spec:
+  serviceName: garage
+  replicas: 1
+  selector:
+    matchLabels: {app: garage}
+  template:
+    metadata:
+      labels: {app: garage}
+    spec:
+      # Garage never calls the Kubernetes API: no service account token in the pod (least privilege)
+      automountServiceAccountToken: false
+      containers:
+      - name: garage
+        image: dxflrs/garage:v2.4.1
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: GARAGE_RPC_SECRET
+          valueFrom: {secretKeyRef: {name: garage-secrets, key: rpc-secret}}
+        - name: GARAGE_ADMIN_TOKEN
+          valueFrom: {secretKeyRef: {name: garage-secrets, key: admin-token}}
+        ports:
+        - {name: s3, containerPort: 3900}
+        - {name: rpc, containerPort: 3901}
+        - {name: admin, containerPort: 3903}
+        readinessProbe:
+          tcpSocket: {port: admin}
+          periodSeconds: 5
+        resources:
+          requests: {cpu: 50m, memory: 64Mi}
+          limits: {memory: 256Mi}
+        volumeMounts:
+        - {name: data, mountPath: /var/lib/garage}
+        - {name: config, mountPath: /etc/garage.toml, subPath: garage.toml}
+      volumes:
+      - name: config
+        configMap: {name: garage-config}
+  volumeClaimTemplates:
+  - metadata: {name: data}
+    spec:
+      accessModes: [ReadWriteOnce]
+      storageClassName: standard
+      resources:
+        requests: {storage: 2Gi}

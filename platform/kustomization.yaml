@@ -1,8 +1,11 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+# Every namespaced object lives in platform, stated explicitly so a plain kubectl apply (offline step 1.12) cannot land in default
+namespace: platform
 resources:
 - namespace.yaml
 - approval-gate
+- garage
 labels:
 - pairs: {mycompany.jp/ea-id: EA-0000, mycompany.jp/env: shared}
   includeTemplates: true

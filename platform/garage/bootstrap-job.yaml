@@ -1,0 +1,33 @@
+# Garage setup: layout, five buckets, the platform-test key (created by Garage) and its permission. Runs after every
+# sync of the platform Application (PostSync hook); re-runnable (see bootstrap.sh). No automatic retry.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: garage-bootstrap
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 720
+  template:
+    spec:
+      serviceAccountName: garage-bootstrap
+      restartPolicy: Never
+      containers:
+      - name: bootstrap
+        image: curlimages/curl:8.22.0
+        imagePullPolicy: IfNotPresent
+        command: ["sh", "/scripts/bootstrap.sh"]
+        env:
+        - {name: GARAGE_ADMIN, value: "http://garage.platform.svc.cluster.local:3903"}
+        - name: ADMIN_TOKEN
+          valueFrom: {secretKeyRef: {name: garage-secrets, key: admin-token}}
+        resources:
+          requests: {cpu: 10m, memory: 16Mi}
+          limits: {memory: 64Mi}
+        volumeMounts:
+        - {name: scripts, mountPath: /scripts}
+      volumes:
+      - name: scripts
+        configMap: {name: garage-bootstrap-script}
