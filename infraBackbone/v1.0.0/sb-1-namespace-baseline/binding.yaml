@@ -1,0 +1,13 @@
+# Opt-out: every namespace is checked except these five (matched by name); default is checked (P14)
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata: {name: require-ea-id-and-env}
+spec:
+  policyName: require-ea-id-and-env
+  validationActions: [Deny]
+  matchResources:
+    namespaceSelector:
+      matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: NotIn
+        values: [kube-system, kube-public, kube-node-lease, local-path-storage, argocd]

@@ -1,0 +1,9 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata: {name: sb-1-namespace-baseline, namespace: argocd}
+spec:
+  project: platform
+  source: {repoURL: https://github.com/wfc0711/infra.git, targetRevision: main, path: infraBackbone/v1.0.0/sb-1-namespace-baseline}
+  destination: {server: https://kubernetes.default.svc, namespace: platform}
+  syncPolicy:
+    automated: {prune: true, selfHeal: true}

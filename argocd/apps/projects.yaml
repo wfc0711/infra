@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata: {name: platform, namespace: argocd}
+spec:
+  description: Platform and standard backbone, owned by the infra team
+  sourceRepos: [https://github.com/wfc0711/infra.git]
+  destinations:
+  - {server: https://kubernetes.default.svc, namespace: platform}
+  clusterResourceWhitelist:
+  - {group: "", kind: Namespace}
+  - {group: admissionregistration.k8s.io, kind: ValidatingAdmissionPolicy}
+  - {group: admissionregistration.k8s.io, kind: ValidatingAdmissionPolicyBinding}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata: {name: apps, namespace: argocd}
+spec:
+  description: Application lanes; sources from both repos (remote infra base)
+  sourceRepos: [https://github.com/wfc0711/enterpriseApps.git, https://github.com/wfc0711/infra.git]
+  destinations:
+  - {server: https://kubernetes.default.svc, namespace: gate-test-*}
+  - {server: https://kubernetes.default.svc, namespace: app-*}
+  clusterResourceWhitelist:
+  - {group: "", kind: Namespace}

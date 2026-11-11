@@ -1,0 +1,31 @@
+# Gate and contract check, run by ArgoCD before every sync of an app lane (PreSync hook).
+# Phase 1 step 1.5: stub that prints the identity values copied in by the app lane (cross-repo render spike).
+# The gate logic (tickets, gate-state, change log, timeout) arrives in step 1.9, the contract check in 1.10.
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: gate}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gate
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      serviceAccountName: gate
+      restartPolicy: Never
+      containers:
+      - name: gate
+        image: curlimages/curl:8.22.0
+        imagePullPolicy: IfNotPresent
+        command: ["sh", "-c", "env | grep -E '^(APP|INFRA)_' | sort"]
+        env:
+        # Values are set by the app lane's Kustomize replacements; "unset" means the copy did not happen
+        - {name: APP_EA_ID, value: unset}
+        - {name: APP_CUSTOM_BLOCK_VERSION, value: unset}
+        - {name: INFRA_EA_ID, value: unset}
+        - {name: INFRA_CUSTOM_BLOCK_VERSION, value: unset}

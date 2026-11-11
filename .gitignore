@@ -1,0 +1,6 @@
+# Never in Git (public repo, assumption A1): evidence can hold keys, secrets are generated locally (P4)
+evidence/
+secrets/
+*.key
+*.pem
+.DS_Store

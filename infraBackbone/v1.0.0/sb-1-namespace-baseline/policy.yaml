@@ -1,0 +1,25 @@
+# SB-1 namespace baseline: label policy (ADR-19, Phase 1 plan P14). Generated with the six checks below; edit with care.
+# Checks 2 to 4 test values only where the label exists; a missing label is reported by check 1 (object),
+# check 5 (CronJob job template) or check 6 (pod template). Namespace objects are not checked.
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata: {name: require-ea-id-and-env}
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+    - {apiGroups: ["apps"], apiVersions: ["v1"], operations: ["CREATE", "UPDATE"], resources: ["deployments", "statefulsets"]}
+    - {apiGroups: ["batch"], apiVersions: ["v1"], operations: ["CREATE", "UPDATE"], resources: ["jobs", "cronjobs"]}
+  validations:
+  - expression: "has(object.metadata.labels) && 'mycompany.jp/ea-id' in object.metadata.labels && 'mycompany.jp/env' in object.metadata.labels"
+    message: "check 1: the resource must carry both labels mycompany.jp/ea-id and mycompany.jp/env"
+  - expression: "!has(object.metadata.labels) || !('mycompany.jp/env' in object.metadata.labels) || object.metadata.labels['mycompany.jp/env'] in ['dev', 'prod', 'shared']"
+    message: "check 2: mycompany.jp/env must be dev, prod or shared"
+  - expression: "!has(object.metadata.labels) || !('mycompany.jp/env' in object.metadata.labels) || object.metadata.labels['mycompany.jp/env'] != 'shared' || request.namespace == 'platform'"
+    message: "check 3: mycompany.jp/env=shared is allowed only in namespace platform"
+  - expression: "!has(object.metadata.labels) || !('mycompany.jp/ea-id' in object.metadata.labels) || object.metadata.labels['mycompany.jp/ea-id'].matches('^EA-[0-9]{4}$')"
+    message: "check 4: mycompany.jp/ea-id must be EA- followed by four digits (for example EA-0001)"
+  - expression: "object.kind != 'CronJob' || (has(object.spec.jobTemplate.metadata) && has(object.spec.jobTemplate.metadata.labels) && 'mycompany.jp/ea-id' in object.spec.jobTemplate.metadata.labels && 'mycompany.jp/env' in object.spec.jobTemplate.metadata.labels && object.spec.jobTemplate.metadata.labels['mycompany.jp/env'] in ['dev', 'prod', 'shared'] && (object.spec.jobTemplate.metadata.labels['mycompany.jp/env'] != 'shared' || request.namespace == 'platform') && object.spec.jobTemplate.metadata.labels['mycompany.jp/ea-id'].matches('^EA-[0-9]{4}$'))"
+    message: "check 5: a CronJob's spec.jobTemplate.metadata.labels must carry both labels with valid values"
+  - expression: "object.kind == 'CronJob' ? (has(object.spec.jobTemplate.spec.template.metadata) && has(object.spec.jobTemplate.spec.template.metadata.labels) && 'mycompany.jp/ea-id' in object.spec.jobTemplate.spec.template.metadata.labels && 'mycompany.jp/env' in object.spec.jobTemplate.spec.template.metadata.labels && object.spec.jobTemplate.spec.template.metadata.labels['mycompany.jp/env'] in ['dev', 'prod', 'shared'] && (object.spec.jobTemplate.spec.template.metadata.labels['mycompany.jp/env'] != 'shared' || request.namespace == 'platform') && object.spec.jobTemplate.spec.template.metadata.labels['mycompany.jp/ea-id'].matches('^EA-[0-9]{4}$')) : (has(object.spec.template.metadata) && has(object.spec.template.metadata.labels) && 'mycompany.jp/ea-id' in object.spec.template.metadata.labels && 'mycompany.jp/env' in object.spec.template.metadata.labels && object.spec.template.metadata.labels['mycompany.jp/env'] in ['dev', 'prod', 'shared'] && (object.spec.template.metadata.labels['mycompany.jp/env'] != 'shared' || request.namespace == 'platform') && object.spec.template.metadata.labels['mycompany.jp/ea-id'].matches('^EA-[0-9]{4}$'))"
+    message: "check 6: the pod template must carry both labels with valid values"

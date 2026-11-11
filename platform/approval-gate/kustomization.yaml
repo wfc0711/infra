@@ -1,0 +1,5 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# hook/ is not listed here: it is the gate Job that each app lane pulls into its own namespace
+resources:
+- gate-state-rbac.yaml
