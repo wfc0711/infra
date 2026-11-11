@@ -4,4 +4,4 @@ kind: ConfigMap
 metadata: {name: infra-identity}
 data:
   eaId: EA-9999
-  customBlockVersion: v1
+  customBlockVersion: v2
