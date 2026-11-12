@@ -1,5 +1,5 @@
-# Lane prod of the test app gate-test (EA-9999), Phase 1 step 1.9. Automated with prune and self-heal; no retry
-# policy, so after a gate "no" or timeout ArgoCD does not sync that revision again by itself (plan P12).
+# Lane prod of the test app gate-test (EA-9999), Phase 1 step 1.9. Automated with prune and self-heal; retry limit 0
+# set explicitly: without it ArgoCD retries a failed automated sync up to 5 times (plan P12, push 7b).
 # The namespace is created by ArgoCD with the labels below (D3), before the PreSync gate runs.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -10,6 +10,7 @@ spec:
   destination: {server: https://kubernetes.default.svc, namespace: gate-test-prod}
   syncPolicy:
     automated: {prune: true, selfHeal: true}
+    retry: {limit: 0}   # no automatic retry of a failed sync (plan P12; the default for automated syncs is 5)
     syncOptions: [CreateNamespace=true]
     managedNamespaceMetadata:
       labels: {mycompany.jp/ea-id: EA-9999, mycompany.jp/env: prod}
