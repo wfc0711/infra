@@ -1,10 +1,6 @@
-# Gate and contract check, run by ArgoCD before every sync of an app lane (PreSync hook).
-# Phase 1 step 1.5: stub that prints the identity values copied in by the app lane (cross-repo render spike).
-# The gate logic (tickets, gate-state, change log, timeout) arrives in step 1.9, the contract check in 1.10.
-apiVersion: v1
-kind: ServiceAccount
-metadata: {name: gate}
----
+# Governance gate (Phase 1 step 1.9): PreSync hook (wave 0) run before every sync of an app lane; see gate.sh.
+# The lane sets LANE, GATE_TIMEOUT_SECONDS and activeDeadlineSeconds (= GATE_TIMEOUT_SECONDS + 120, plan P12);
+# its replacements set APP, RELEASE_ID and the identity values (the contract check uses them from step 1.10).
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -12,20 +8,41 @@ metadata:
   annotations:
     argocd.argoproj.io/hook: PreSync
     argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   backoffLimit: 0
+  activeDeadlineSeconds: 0        # placeholder; every lane sets it (render check: timeout + 120)
   template:
     spec:
       serviceAccountName: gate
       restartPolicy: Never
+      securityContext: {runAsNonRoot: true, runAsUser: 100, runAsGroup: 101}
       containers:
       - name: gate
         image: curlimages/curl:8.22.0
         imagePullPolicy: IfNotPresent
-        command: ["sh", "-c", "env | grep -E '^(APP|INFRA)_' | sort"]
+        command: ["sh", "/scripts/gate.sh"]
         env:
-        # Values are set by the app lane's Kustomize replacements; "unset" means the copy did not happen
+        # "unset" means the lane did not set the value; gate.sh then stops (fail closed) where it needs it
+        - {name: APP, value: unset}
+        - {name: LANE, value: unset}
+        - {name: RELEASE_ID, value: unset}
+        - {name: GATE_TIMEOUT_SECONDS, value: unset}
         - {name: APP_EA_ID, value: unset}
         - {name: APP_CUSTOM_BLOCK_VERSION, value: unset}
         - {name: INFRA_EA_ID, value: unset}
         - {name: INFRA_CUSTOM_BLOCK_VERSION, value: unset}
+        resources:
+          requests: {cpu: 10m, memory: 16Mi}
+          limits: {memory: 64Mi}
+        volumeMounts:
+        - {name: approvals, mountPath: /approvals}
+        - {name: outputs, mountPath: /outputs}
+        - {name: scripts, mountPath: /scripts}
+      volumes:
+      - name: approvals
+        hostPath: {path: /approvals, type: Directory}
+      - name: outputs
+        hostPath: {path: /outputs, type: Directory}
+      - name: scripts
+        configMap: {name: gate-script}

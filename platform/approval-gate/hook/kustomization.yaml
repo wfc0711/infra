@@ -1,4 +1,17 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+# The gate, pulled by each app lane at an infra tag (gate-v1). All three objects are PreSync hooks, in waves:
+# ServiceAccount (-2), ConfigMap gate-script (-1), Job (0), so each exists before the next on the first sync too.
 resources:
+- gate-sa.yaml
 - gate-job.yaml
+configMapGenerator:
+- name: gate-script
+  files: [gate.sh]
+  options:
+    annotations:
+      argocd.argoproj.io/hook: PreSync
+      argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+      argocd.argoproj.io/sync-wave: "-1"
+generatorOptions:
+  disableNameSuffixHash: true

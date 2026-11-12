@@ -1,0 +1,10 @@
+# ServiceAccount of the gate Job; the RoleBinding gate-state-writer in platform lets it get and patch gate-state only.
+# A PreSync hook (wave -2) so it exists before the gate Job on every sync, the first included.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gate
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "-2"
