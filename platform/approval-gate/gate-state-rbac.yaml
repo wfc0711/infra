@@ -1,4 +1,5 @@
-# The gate Job may read and update only the ConfigMap gate-state (created empty by the secrets script, not in Git; P9)
+# The gate Job may read and update only the ConfigMap gate-state (created empty by the secrets script, not in Git; P9),
+# and read only the ConfigMap contract-policy (in Git; step 1.10, D5). Nothing else in platform.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata: {name: gate-state-writer, namespace: platform}
@@ -7,6 +8,10 @@ rules:
   resources: [configmaps]
   resourceNames: [gate-state]
   verbs: [get, patch]
+- apiGroups: [""]
+  resources: [configmaps]
+  resourceNames: [contract-policy]
+  verbs: [get]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

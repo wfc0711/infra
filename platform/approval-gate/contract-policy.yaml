@@ -1,0 +1,9 @@
+# Contract mode per app (Phase 1 step 1.10, decision D5; ADR-17). Owned by governance in the infra repo, on main (not in a
+# gate tag), so a mode change needs no new gate release. Key = app name, value warn or block. The gate reads it on every
+# run; a missing ConfigMap, a missing key or any other value counts as block (D6). Labels EA-0000/shared come from
+# platform/kustomization.yaml.
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: contract-policy}
+data:
+  gate-test: warn
