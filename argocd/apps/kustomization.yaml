@@ -4,5 +4,7 @@ resources:
 - projects.yaml
 - platform.yaml
 - sb-1-namespace-baseline.yaml
+- gate-test-dev.yaml
+- gate-test-prod.yaml
 labels:
 - pairs: {mycompany.jp/ea-id: EA-0000, mycompany.jp/env: shared}

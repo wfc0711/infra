@@ -1,0 +1,15 @@
+# Lane dev of the test app gate-test (EA-9999), Phase 1 step 1.9. Automated with prune and self-heal; no retry
+# policy, so after a gate "no" or timeout ArgoCD does not sync that revision again by itself (plan P12).
+# The namespace is created by ArgoCD with the labels below (D3), before the PreSync gate runs.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata: {name: gate-test-dev, namespace: argocd}
+spec:
+  project: apps
+  source: {repoURL: https://github.com/wfc0711/enterpriseApps.git, targetRevision: main, path: gate-test/dev}
+  destination: {server: https://kubernetes.default.svc, namespace: gate-test-dev}
+  syncPolicy:
+    automated: {prune: true, selfHeal: true}
+    syncOptions: [CreateNamespace=true]
+    managedNamespaceMetadata:
+      labels: {mycompany.jp/ea-id: EA-9999, mycompany.jp/env: dev}
