@@ -6,4 +6,4 @@ apiVersion: v1
 kind: ConfigMap
 metadata: {name: contract-policy}
 data:
-  gate-test: warn
+  gate-test: block
