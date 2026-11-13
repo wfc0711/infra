@@ -6,7 +6,7 @@ kind: Application
 metadata: {name: gate-test-prod, namespace: argocd}
 spec:
   project: apps
-  source: {repoURL: https://github.com/wfc0711/enterpriseApps.git, targetRevision: main, path: gate-test/prod}
+  source: {repoURL: https://github.com/wfc0711/enterpriseApps.git, targetRevision: main, path: gate-test/environments/PROD}
   destination: {server: https://kubernetes.default.svc, namespace: gate-test-prod}
   syncPolicy:
     automated: {prune: true, selfHeal: true}
